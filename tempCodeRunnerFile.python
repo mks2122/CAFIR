@@ -1,0 +1,11 @@
+from web3 import Web3
+
+# Connect to Ganache
+w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:7545'))
+
+# Replace this with the account address you're using
+account_address = w3.eth.accounts[0]
+
+# Get the balance (returns balance in wei)
+balance = w3.eth.get_balance(account_address)
+print(f"Account balance: {w3.fromWei(balance, 'ether')} ETH")
