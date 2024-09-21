@@ -11,44 +11,54 @@ solcx.set_solc_version('0.8.0')
 w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:7545'))
 w3.eth.default_account = w3.eth.accounts[0]
 
-# Compile the contract
-# with open("PoliceCaseManagement.sol", "r") as file:
-#     contract_source_code = file.read()
-
+# Path to the compiled contract JSON
 compiled_contract_path = r'E:\personalProjects\blockHack\build\contracts\PoliceCaseManagement.json'
 
+# Deployed contract address (from Ganache)
 deployed_contract_address = '0x2E21154e0820e77b52565D0b58D2f734C1a93A15'
 
-# compiled_sol = compile_standard({
-#     "language": "Solidity",
-#     "sources": {"PoliceCaseManagement.sol": {"content": contract_source_code}},
-#     "settings": {"outputSelection": {"*": {"*": ["abi", "metadata", "evm.bytecode", "evm.sourceMap"]}}},
-# })
-
-# abi = compiled_sol['contracts']['PoliceCaseManagement.sol']['PoliceCaseManagement']['abi']
-# bytecode = compiled_sol['contracts']['PoliceCaseManagement.sol']['PoliceCaseManagement']['evm']['bytecode']['object']
-
-# # Deploy contract
-# PoliceCaseContract = w3.eth.contract(abi=abi, bytecode=bytecode)
-# tx_hash = PoliceCaseContract.constructor().transact()
-# tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-
-# contract_address = tx_receipt.contractAddress
-# print(f"Contract deployed at {contract_address}")
-
-
+# Load the compiled contract's ABI from the JSON file
 with open(compiled_contract_path) as file:
-    contract_json = json.load(file)  
-     
-    # fetch contract's abi - necessary to call its functions
+    contract_json = json.load(file)
     contract_abi = contract_json['abi']
- 
-# Fetching deployed contract reference
-contract = w3.eth.contract(
-    address = deployed_contract_address, abi = contract_abi)
- 
-# Calling contract function (this is not persisted 
-# to the blockchain)
-output = contract.functions.getCase().call()
- 
-print(output)
+
+# Fetch the deployed contract
+contract = w3.eth.contract(address=deployed_contract_address, abi=contract_abi)
+
+
+print(f"Using contract at address: {deployed_contract_address}")
+print(f"ABI: {contract_abi}")
+
+
+# Function to store a case on the blockchain
+def store_case(fir_number, evidence_hash, forensics_hash, case_status):
+    # Create a transaction to call the createCase function from the smart contract
+    tx_hash = contract.functions.createCase(
+        fir_number,
+        evidence_hash,
+        forensics_hash,
+        case_status
+    ).transact()
+
+    # Wait for the transaction to be mined
+    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    print(f"Transaction successful with hash: {tx_receipt.transactionHash.hex()}")
+
+
+# Function to get case details
+def get_case(fir_number):
+
+    case_details = contract.functions.getCase(fir_number).call()
+    print("FIR Number:", case_details[0])
+    print("Evidence Hash:", case_details[1])
+    print("Forensics Hash:", case_details[2])
+    print("Case Status:", case_details[3])
+    print("Timestamp:", case_details[4])
+
+
+# Example usage
+# Store a new case on the blockchain
+store_case("FIR123456", "evidence_hash_123", "forensics_hash_123", "Open")
+
+# Fetch case details from the blockchain
+get_case("FIR12345")
