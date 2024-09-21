@@ -1,52 +1,82 @@
+// SPDX-License-Identifier: GPL-3.0
+
 pragma solidity ^0.8.0;
 
 contract PoliceCaseManagement {
+
     struct CaseData {
-        string firNumber;
-        string evidenceHash;
-        string forensicsHash;
+        bytes32 firNumber;
+        bytes32 evidenceHash;
+        bytes32 forensicsHash;
         string caseStatus;
-        uint timestamp;
+        uint256 timestamp;
+        bool isActive;
     }
 
-    // Using bytes32 for mapping keys, but string firNumber is still used in events
-    mapping(bytes32 => CaseData) public cases;
-
-    event CaseCreated(string firNumber, uint timestamp);
-    event CaseUpdated(string firNumber, string caseStatus, uint timestamp);
 
     function createCase(
-        string memory firNumber,
-        string memory evidenceHash,
-        string memory forensicsHash,
-        string memory caseStatus
+        bytes32 firNumber,
+        bytes32 evidenceHash,
+        bytes32 forensicsHash,
+        string calldata caseStatus
     ) public {
-        bytes32 firKey = keccak256(abi.encodePacked(firNumber)); // Convert firNumber to bytes32 for mapping key
-        cases[firKey] = CaseData(
+        require(firNumber != bytes32(0), "Invalid FIR number");
+        require(cases[firNumber].firNumber == bytes32(0), "Case already exists");
+
+        cases[firNumber] = CaseData(
             firNumber,
             evidenceHash,
             forensicsHash,
             caseStatus,
-            block.timestamp
+            block.timestamp,
+            true
         );
-        emit CaseCreated(firNumber, block.timestamp); // Emit original firNumber (string)
+
+        emit CaseCreated(firNumber, block.timestamp);
     }
 
-    function updateCaseStatus(string memory firNumber, string memory caseStatus) public {
-        bytes32 firKey = keccak256(abi.encodePacked(firNumber)); // Convert firNumber to bytes32 for mapping key
-        require(bytes(cases[firKey].firNumber).length != 0, "Case not found");  // Ensure case exists before updating
-        CaseData storage c = cases[firKey];
+    function updateCaseStatus(bytes32 firNumber, string calldata caseStatus) public {
+        require(cases[firNumber].firNumber != bytes32(0), "Case not found");
+        require(cases[firNumber].isActive, "Case is closed");
+
+        CaseData storage c = cases[firNumber];
         c.caseStatus = caseStatus;
-        emit CaseUpdated(firNumber, caseStatus, block.timestamp); // Emit original firNumber (string)
+
+        emit CaseUpdated(firNumber, caseStatus, block.timestamp);
     }
 
-    function getCase(string memory firNumber) public view returns (
-        string memory fir, string memory evidence, string memory forensics, string memory status, uint timestamp
-    ) {
-        bytes32 firKey = keccak256(abi.encodePacked(firNumber)); // Convert firNumber to bytes32 for mapping key
-        require(bytes(cases[firKey].firNumber).length != 0, "Case not found");
+    function closeCase(bytes32 firNumber) public {
+        require(cases[firNumber].firNumber != bytes32(0), "Case not found");
+        require(cases[firNumber].isActive, "Case is already closed");
 
-        CaseData memory c = cases[firKey];
-        return (c.firNumber, c.evidenceHash, c.forensicsHash, c.caseStatus, c.timestamp);
+        CaseData storage c = cases[firNumber];
+        c.isActive = false;
+        c.caseStatus = "Closed";
+
+        emit CaseUpdated(firNumber, "Closed", block.timestamp);
+    }
+
+    function getCase(bytes32 firNumber)
+        public
+        view
+        returns (
+            bytes32 fir,
+            bytes32 evidence,
+            bytes32 forensics,
+            string memory status,
+            uint256 timestamp
+        )
+    {
+        require(cases[firNumber].firNumber != bytes32(0), "Case not found");
+
+        CaseData memory c = cases[firNumber];
+        return (
+            c.firNumber,
+            c.evidenceHash,
+            c.forensicsHash,
+            c.caseStatus,
+            c.timestamp
+        );
     }
 }
+
