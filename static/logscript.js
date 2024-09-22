@@ -1,28 +1,25 @@
- 
-const signupForm = document.getElementById('login-form');
-
-signupForm.addEventListener('submit', (event) => {
-    event.preventDefault(); // Prevent default form submission
-
-    // Validate form inputs
-    const username = document.getElementById('name').value;
-    const password = document.getElementById('password').value;
-
-    // Check for empty fields
-    if (!username ||  !password) {
-        alert('Please fill in all required fields.');
-        return;
-    }
-
-    // If all validation passes, submit the form or perform other actions
-
-    fetch('/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-    });
-    console.log('Form submitted successfully!');
-    // Add your form submission logic here (e.g., sending data to a server)
+let buttonenabled = true, scroll = 0;
+$(document).on("click", ".darkmode", function(){
+ if(!buttonenabled) return;
+ buttonenabled = false;
+ $(".clip").html($("body >.container")[0].outerHTML); 
+ scrollbind($(".clip .container"));
+ $(".clip .container").toggleClass("dark").scrollTop(scroll); 
+ $(".clip .darkmode").toggleClass("fa-moon").toggleClass("fa-sun"); 
+ $(".clip").addClass("anim"); 
+ setTimeout(function(){
+ $("body >.container").replaceWith($(".clip").html()) 
+ scrollbind($("body >.container")); 
+ $("body >.container").scrollTop(scroll);
+ $(".clip").html("").removeClass("anim"); 
+ buttonenabled = true;
+ }, 1000); 
 });
+ 
+const scrollbind = el => el.bind("scroll", function(){
+ scroll = $(this).scrollTop();
+ if($(".container").length > 1)
+ $(".container").scrollTop(scroll); 
+ 
+});
+scrollbind($(".container"));
