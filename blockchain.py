@@ -53,6 +53,22 @@ def create_case_table(fir_number):
     cursor.execute(create_query)
     db.commit()
 
+
+def detailsGetter():
+    cursor.execute("SHOW TABLES")
+    tables = cursor.fetchall()
+
+    dic={}
+    for i in tables:
+        query=f"SELECT  complainant_name,phone_number, nature_of_offence  , accused_names, witness_names FROM {i[0]}"
+        cursor.execute(query)
+        data=cursor.fetchall()
+        dic[i[0]]=data
+    # print(dic)
+    return tables,dic
+
+detailsGetter()
+
 # Function to store a case on the blockchain and SQL database
 def store_case(fir_number, complainant_name, father_or_husband_name, address, phone_number, email, 
                distance_from_police_station, direction_from_police_station, date_and_hour_of_occurrence, 
@@ -63,7 +79,8 @@ def store_case(fir_number, complainant_name, father_or_husband_name, address, ph
 
     # Hash the FIR number and evidence description
     fir_hash = keccak_hash(fir_number)  # Returns bytes32
-    evidence_hash = keccak_hash(stolen_property_description)  # Returns bytes32
+    print((stolen_property_description))
+    evidence_hash = keccak_hash(str(stolen_property_description[0]))  # Returns bytes32
 
     # Blockchain: Create a transaction to call the createCase function from the smart contract
     tx_hash = contract.functions.createCase(
@@ -154,10 +171,32 @@ def get_case_from_blockchain(fir_number):
     print("Case Status:", case_details[2])
     print("Timestamp:", case_details[3])
 
-# Example usage
-store_case("FIR123456", "John Doe", "Robert Doe", "123 Main St", "1234567890", 
-           "john.doe@example.com", "5 km", "North", "2023-09-20 14:00:00", 
-           "Theft", "Stolen laptop", "Accused Name", "Witness Name", "Open")
+def get_case_details(fir_number):
+    table_name = f"FIR_{fir_number}"
+    select_query = f"""SELECT * FROM `{table_name}` WHERE id = (SELECT MAX(id) FROM `{table_name}`)"""
+    cursor.execute(select_query)
+    case_details = cursor.fetchone()
+    print("FIR Number:", fir_number)
+    print("Complainant Name:", case_details[1])
+    print("Father's/Husband's Name:", case_details[2])
+    print("Address:", case_details[3])
+    print("Phone Number:", case_details[4])
+    print("Email:", case_details[5])
+    print("Distance from Police Station:", case_details[6])
+    print("Direction from Police Station:", case_details[7])
+    print("Date and Hour of Occurrence:", case_details[8])
+    print("Nature of Offence:", case_details[9])
+    print("Stolen Property Description:", case_details[10])
+    print("Accused Names:", case_details[11])
+    print("Witness Names:", case_details[12])
+    print("Case Status:", case_details[13])
+    print("Timestamp:", case_details[14])
+    return case_details
 
-# Fetch case details from the blockchain
-get_case_from_blockchain("FIR123456")
+# Example usage
+# store_case("FIR123456", "John Doe", "Robert Doe", "123 Main St", "1234567890", 
+#            "john.doe@example.com", "5 km", "North", "2023-09-20 14:00:00", 
+#            "Theft", "Stolen laptop", "Accused Name", "Witness Name", "Open")
+
+# # Fetch case details from the blockchain
+# get_case_from_blockchain("FIR123456")

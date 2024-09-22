@@ -1,6 +1,7 @@
 body {
     font-family: Arial, sans-serif;
-    background-image: url('https://media.gettyimages.com/id/1178232576/photo/security-padlock-protection-in-network.jpg?s=612x612&w=0&k=20&c=cZuJVTJkx6_vRIXdOMlIoq0BoSPNPIVRFOkA2oD807k='); /* Replace with your image */
+    background-image: url('https://www.shutterstock.com/image-vector/fingerprint-scanning-on-circuit-board-600nw-2441137057.jpg');
+    background-color: black;
     background-size: cover; /* Ensures the image covers the entire background */
     background-position: center; /* Centers the image */
     background-repeat: no-repeat; /* Prevents the image from repeating */
@@ -8,13 +9,23 @@ body {
     margin: 0; /* Removes default margin */
     color: #fff; /* White text */
     text-align: center;
+    overflow: hidden;
 }
 
 
 .container {
-    max-width: 400px;
-    margin: 0 auto;
+    display: grid;
+    /* position: absolute; */
+    
+    max-width: fit-content;
+    /* margin: 0 auto; */
+    margin-top: auto;
+    margin-left: auto;
+    margin-right: auto;
     padding: 20px;
+    /* align-items: center;
+    align-content: center;
+    text-align: center; */
 }
 
 h1 {
@@ -26,6 +37,8 @@ h1 {
     background-color: #222;
     padding: 20px;
     border-radius: 20px;
+    box-shadow: 2px 5px 5px rgb(255, 255,255,0.3);
+    
 }
 
 form {
@@ -39,6 +52,8 @@ input {
     border-bottom: 1px solid #ccc;
     background-color: #333;
     color: #fff;
+    margin-top: 25px;
+    border-radius: 5px;
 }
 
 button {

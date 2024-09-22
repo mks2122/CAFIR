@@ -6,6 +6,7 @@
 </head>
 <body>
     <div class="container">
+        <button id="history" onclick="historyOpen()">Check Previous FIRs</button>
         <h1>CAFIR - Complaint Form</h1>
         <button id="logoutButton" onclick="logoutClick()">Logout</button>
         <form id="complaint-form" action="/firDetails" method="post">
@@ -54,21 +55,21 @@
                 <input type="text" id="stolenPropertyDescription" name="stolenPropertyDescription[]" placeholder="Enter description of stolen property">
             </div>
             <h2>Accused Details</h2>
-            <div class="form-group accused-details">
+            <div class="form-group accused-details" id="accused-inputs">
                 <label for="accusedName">Name:</label>
                 <input type="text" id="accusedName" name="accusedName[]" placeholder="Enter accused's name">
             </div>
-            <button type="button" id="addAccused">Add More</button>
+            <button type="button" id="addAccused" onclick="addAccusedFeild()">Add More</button>
             <h2>Witness Details</h2>
-            <div class="form-group witness-details">
+            <div class="form-group witness-details" id="witness-inputs">
                 <label for="witnessName">Name:</label>
                 <input type="text" id="witnessName" name="witnessName[]" placeholder="Enter witness's name">
             </div>
-            <button type="button" id="addWitness">Add More</button>
+            <button type="button" id="addWitness" onclick="addWitnessFeild()">Add More</button>
             <h2>Complaint</h2>
             <textarea id="complaint" name="complaint" required placeholder="Briefly describe the incident"></textarea>
 
-            <button type="submit">Submit Complaint</button>
+            <button type="submit" style="margin-top: 1em;">Submit Complaint</button>
         </form>
     </div>
 
