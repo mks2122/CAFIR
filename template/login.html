@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CAFIR</title>
+    <link rel="stylesheet" href="static/logstyle.css">
+</head>
+<body>
+    <div class="container">
+        <h1>CAFIR</h1>
+        <div class="form-container">
+            <form id="login-form" action="/login" method="post">
+                <label for="username"></label>
+                <input type="text" id="name" name="Username" required placeholder="Userame">
+
+                <label for="password"></label>
+                <input type="password" id="password" name="password" required placeholder="Password">
+                <button type="submit">Login</button>
+                <p id="error">{{message}}</p>
+            </form>
+        </div>
+    </div>
+    <!-- <script src="static/logscript.js"></script> -->
+</body>
+</html>

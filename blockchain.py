@@ -29,18 +29,46 @@ with open(compiled_contract_path) as file:
 def keccak_hash(value):
     return Web3.keccak(text=value)  # Hashes the string and returns bytes32
 
+# Create a new table for the FIR
+def create_case_table(fir_number):
+    table_name = f"FIR_{fir_number}"
+    create_query = f"""
+    CREATE TABLE IF NOT EXISTS `{table_name}` (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        complainant_name VARCHAR(255),
+        father_or_husband_name VARCHAR(255),
+        address VARCHAR(255),
+        phone_number VARCHAR(20),
+        email VARCHAR(255),
+        distance_from_police_station VARCHAR(255),
+        direction_from_police_station VARCHAR(255),
+        date_and_hour_of_occurrence DATETIME,
+        nature_of_offence VARCHAR(255),
+        stolen_property_description VARCHAR(255),
+        accused_names TEXT,
+        witness_names TEXT,
+        case_status VARCHAR(50),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )"""
+    cursor.execute(create_query)
+    db.commit()
+
 # Function to store a case on the blockchain and SQL database
-def store_case(fir_number, evidence_hash, forensics_hash, case_status):
-    # Hash the values using keccak-256
+def store_case(fir_number, complainant_name, father_or_husband_name, address, phone_number, email, 
+               distance_from_police_station, direction_from_police_station, date_and_hour_of_occurrence, 
+               nature_of_offence, stolen_property_description, accused_names, witness_names, case_status):
+    
+    # Create a new table for the FIR
+    create_case_table(fir_number)
+
+    # Hash the FIR number and evidence description
     fir_hash = keccak_hash(fir_number)  # Returns bytes32
-    evidence_hash = keccak_hash(evidence_hash)
-    forensics_hash = keccak_hash(forensics_hash)
+    evidence_hash = keccak_hash(stolen_property_description)  # Returns bytes32
 
     # Blockchain: Create a transaction to call the createCase function from the smart contract
     tx_hash = contract.functions.createCase(
         fir_hash,
         evidence_hash,
-        forensics_hash,
         case_status
     ).transact()
 
@@ -48,10 +76,19 @@ def store_case(fir_number, evidence_hash, forensics_hash, case_status):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print(f"Transaction successful with hash: {tx_receipt.transactionHash.hex()}")
 
-    # SQL Database: Store the case data in the MySQL database
-    insert_query = """INSERT INTO police_cases (fir_number, evidence_hash, forensics_hash, case_status)
-                      VALUES (%s, %s, %s, %s)"""
-    values = (fir_number, evidence_hash.hex(), forensics_hash.hex(), case_status)
+    # SQL: Insert the data into the new table created for this FIR
+    table_name = f"FIR_{fir_number}"
+    insert_query = f"""INSERT INTO `{table_name}` (
+                        complainant_name, father_or_husband_name, address, phone_number, email, 
+                        distance_from_police_station, direction_from_police_station, date_and_hour_of_occurrence, 
+                        nature_of_offence, stolen_property_description, accused_names, witness_names, case_status
+                      ) 
+                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    
+    values = (complainant_name, father_or_husband_name, address, phone_number, email, 
+              distance_from_police_station, direction_from_police_station, date_and_hour_of_occurrence, 
+              nature_of_offence, stolen_property_description, accused_names, witness_names, case_status)
+
     try:
         cursor.execute(insert_query, values)
         db.commit()
@@ -59,26 +96,6 @@ def store_case(fir_number, evidence_hash, forensics_hash, case_status):
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         db.rollback()
-
-# Function to fetch a case from SQL database
-def get_case_from_sql(fir_number):
-    query = "SELECT * FROM police_cases WHERE fir_number = %s"
-    cursor.execute(query, (fir_number,))
-    result = cursor.fetchone()
-    if result:
-        print(f"FIR Number: {result[0]}, Evidence Hash: {result[1]}, Forensics Hash: {result[2]}, Status: {result[3]}")
-    else:
-        print("Case not found in SQL database")
-
-# Function to fetch case details from the blockchain
-def get_case_from_blockchain(fir_number):
-    fir_hash = keccak_hash(fir_number)  # Convert fir_number to bytes32
-    case_details = contract.functions.getCase(fir_hash).transact()
-    print("FIR Number:", case_details[0])
-    print("Evidence Hash:", case_details[1])
-    print("Forensics Hash:", case_details[2])
-    print("Case Status:", case_details[3])
-    print("Timestamp:", case_details[4])
 
 # Function to update case status on the blockchain and SQL database
 def update_case_status(fir_number, case_status):
@@ -93,9 +110,10 @@ def update_case_status(fir_number, case_status):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print(f"Transaction successful with hash: {tx_receipt.transactionHash.hex()}")
 
-    # SQL Database: Update the case status in the MySQL database
-    update_query = """UPDATE police_cases SET case_status = %s WHERE fir_number = %s"""
-    values = (case_status, fir_number)
+    # SQL Database: Update the case status in the new table
+    table_name = f"FIR_{fir_number}"
+    update_query = f"""UPDATE `{table_name}` SET case_status = %s WHERE id = (SELECT MAX(id) FROM `{table_name}`)"""
+    values = (case_status,)
     try:
         cursor.execute(update_query, values)
         db.commit()
@@ -116,9 +134,9 @@ def close_case(fir_number):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print(f"Transaction successful with hash: {tx_receipt.transactionHash.hex()}")
 
-    # SQL Database: Update the case status in the MySQL database
-    update_query = """UPDATE police_cases SET case_status = 'Closed' WHERE fir_number = %s"""
-    values = (fir_number,)
+    # SQL Database: Update the case status in the new table
+    table_name = f"FIR_{fir_number}"
+    update_query = f"""UPDATE `{table_name}` SET case_status = 'Closed' WHERE id = (SELECT MAX(id) FROM `{table_name}`)"""
     try:
         cursor.execute(update_query, values)
         db.commit()
@@ -127,10 +145,19 @@ def close_case(fir_number):
         print(f"Error: {err}")
         db.rollback()
 
-# Example usage:
-store_case("FIR123456", "evidence_hash_123", "forensics_hash_123", "Open")
+# Function to fetch case details from the blockchain
+def get_case_from_blockchain(fir_number):
+    fir_hash = keccak_hash(fir_number)  # Convert fir_number to bytes32
+    case_details = contract.functions.getCase(fir_hash).transact()
+    print("FIR Number:", case_details[0])
+    print("Case Data Hash:", case_details[1])
+    print("Case Status:", case_details[2])
+    print("Timestamp:", case_details[3])
+
+# Example usage
+store_case("FIR123456", "John Doe", "Robert Doe", "123 Main St", "1234567890", 
+           "john.doe@example.com", "5 km", "North", "2023-09-20 14:00:00", 
+           "Theft", "Stolen laptop", "Accused Name", "Witness Name", "Open")
 
 # Fetch case details from the blockchain
 get_case_from_blockchain("FIR123456")
-print("----------------------------------")
-get_case_from_sql("FIR123456")

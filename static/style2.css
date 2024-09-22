@@ -1,0 +1,119 @@
+/* Global styles */
+body {
+    background-image: url('https://www.shutterstock.com/image-photo/panoramic-long-wide-wall-blue-600nw-1706428765.jpg'); /* Replace with your image */
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #3C4252; /* Dark background color */
+    color: #fff; /* White text */
+    text-align: center;
+  }
+  
+  #logoutButton {
+    position: absolute;
+    top: 2%;
+    right: 2%;
+    padding: 1rem 1.5rem;
+    background-color: #ff0000;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .container {
+    max-width: 80%;
+    margin: 0 auto;
+    padding: 2%;
+  }
+  
+  h1 {
+    font-size: 2.5rem; /* Use rem for font size */
+    margin-bottom: 3rem;
+  }
+  
+  /* Form styles */
+  .form-container {
+    background-color: #222;
+    padding: 5%;
+    border-radius: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  form {
+    margin-bottom: 5rem;
+  }
+  
+  input, textarea {
+    width: 100%;
+    padding: 1.5rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #333;
+    color: #fff;
+  }
+  
+  button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 1.5rem 3rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #0069d9;
+  }
+  
+  /* Additional styles for the complaint form */
+  h2 {
+    font-size: 2.8rem;
+    margin-bottom: 2rem;
+  }
+  
+  .form-group {
+    margin-bottom: 3rem;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 1rem;
+    font-weight: bold;
+  }
+  
+  .stolen-property, .accused-details, .witness-details {
+    margin-bottom: 3rem;
+  }
+  
+  .stolen-property .form-group, .accused-details .form-group, .witness-details .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  #addStolenProperty, #addAccused, #addWitness {
+    background-color: #007bff;
+    color: #fff;
+    padding: 1.2rem 2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  #addStolenProperty:hover, #addAccused:hover, #addWitness:hover {
+    background-color: #0069d9;
+  }
+  
+  textarea {
+    max-height: 20vh; /* Set a maximum height */
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .container {
+      padding: 5%;
+    }
+  }

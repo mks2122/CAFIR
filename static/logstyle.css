@@ -1,0 +1,52 @@
+body {
+    font-family: Arial, sans-serif;
+    background-image: url('https://media.gettyimages.com/id/1178232576/photo/security-padlock-protection-in-network.jpg?s=612x612&w=0&k=20&c=cZuJVTJkx6_vRIXdOMlIoq0BoSPNPIVRFOkA2oD807k='); /* Replace with your image */
+    background-size: cover; /* Ensures the image covers the entire background */
+    background-position: center; /* Centers the image */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
+    height: 100vh; /* Ensures the body takes the full height of the viewport */
+    margin: 0; /* Removes default margin */
+    color: #fff; /* White text */
+    text-align: center;
+}
+
+
+.container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 40px;
+    margin-bottom: 20px;
+}
+
+.form-container {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+form {
+    margin-bottom: 30px;
+}
+
+input {
+    width: 90%;
+    padding: 12px;
+    border: 10px;
+    border-bottom: 1px solid #ccc;
+    background-color: #333;
+    color: #fff;
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 28px;
+    border: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
