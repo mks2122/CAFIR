@@ -162,11 +162,25 @@ def fir_details():
 def details():
 
     tables,dic=detailsGetter()
-    # print(tables)
+    print (tables,dic,end="\n\n")
+    
     
     
     return render_template('Display.html',fir_data=dic)
 
+
+@app.route('/closeCase', methods=['POST'])
+def close_case_route():
+    # Extract the FIR number from the request
+    fir_number = request.get_json().get('fir_number')
+    print(f"Closing case for FIR number: {fir_number}")
+
+    
+    # Close the case using the blockchain function
+    close_case(fir_number)
+    
+    # Redirect to a success page or render a template
+    return 'Case closed successfully!'
 @app.route('/success')
 def success():
     return render_template('successPage.html')  

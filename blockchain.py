@@ -1,13 +1,14 @@
 from web3 import Web3
 import mysql.connector
 import json
+import hashlib
 
 # Connect to MySQL Database
 db = mysql.connector.connect(
-    host="sql12.freesqldatabase.com",
-    user="sql12732577",
-    password="KxcdYFz9WQ",
-    database="sql12732577"
+    host="localhost",
+    user="user",
+    password="user",
+    database="cafir"
 )
 
 cursor = db.cursor()
@@ -22,12 +23,15 @@ compiled_contract_path = r'E:\\personalProjects\\blockHack\\build\\contracts\\Po
 with open(compiled_contract_path) as file:
     contract_json = json.load(file)
     contract_abi = contract_json['abi']
-    deployed_contract_address = '0x2E21154e0820e77b52565D0b58D2f734C1a93A15'
+    deployed_contract_address = '0x55c9879fC1430AD8A5c88b121283E24daBE3B9fE'
     contract = w3.eth.contract(address=deployed_contract_address, abi=contract_abi)
 
 # Function to hash the values using keccak-256
 def keccak_hash(value):
     return Web3.keccak(text=value)  # Hashes the string and returns bytes32
+def generate_fir_hash(fir_data):
+    fir_string = str(fir_data['fir_number']) + fir_data['complainant_name'] + fir_data['nature_of_offence']
+    return hashlib.sha256(fir_string.encode('utf-8')).hexdigest()
 
 # Create a new table for the FIR
 def create_case_table(fir_number):
@@ -48,6 +52,7 @@ def create_case_table(fir_number):
         accused_names TEXT,
         witness_names TEXT,
         case_status VARCHAR(50),
+        fir_hash VARCHAR(255),  -- Store FIR hash in SQL for verification
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )"""
     cursor.execute(create_query)
@@ -60,14 +65,16 @@ def detailsGetter():
 
     dic={}
     for i in tables:
-        query=f"SELECT  complainant_name,phone_number, nature_of_offence  , accused_names, witness_names FROM {i[0]}"
+        tamperStatus=verify_fir_integrity(i[0])
+        query=f"SELECT  complainant_name,phone_number, nature_of_offence  , accused_names, witness_names,case_status,fir_hash FROM {i[0]}"
         cursor.execute(query)
         data=cursor.fetchall()
+        data.append(tamperStatus)
         dic[i[0]]=data
     # print(dic)
     return tables,dic
 
-detailsGetter()
+# detailsGetter()
 
 # Function to store a case on the blockchain and SQL database
 def store_case(fir_number, complainant_name, father_or_husband_name, address, phone_number, email, 
@@ -77,15 +84,20 @@ def store_case(fir_number, complainant_name, father_or_husband_name, address, ph
     # Create a new table for the FIR
     create_case_table(fir_number)
 
-    # Hash the FIR number and evidence description
-    fir_hash = keccak_hash(fir_number)  # Returns bytes32
-    print((stolen_property_description))
-    evidence_hash = keccak_hash(str(stolen_property_description[0]))  # Returns bytes32
+    # Generate the FIR data hash
+    fir_data = {
+        'fir_number': fir_number,
+        'complainant_name': complainant_name,
+        'nature_of_offence': nature_of_offence,
+        'accused_names': accused_names,
+        'witness_names': witness_names,
+    }
+    fir_hash = generate_fir_hash(fir_data)
 
-    # Blockchain: Create a transaction to call the createCase function from the smart contract
+    # Blockchain: Store the FIR hash
     tx_hash = contract.functions.createCase(
-        fir_hash,
-        evidence_hash,
+        keccak_hash(fir_number),  # Store FIR number hash
+        keccak_hash(stolen_property_description),  # Store stolen property description hash
         case_status
     ).transact()
 
@@ -93,18 +105,18 @@ def store_case(fir_number, complainant_name, father_or_husband_name, address, ph
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print(f"Transaction successful with hash: {tx_receipt.transactionHash.hex()}")
 
-    # SQL: Insert the data into the new table created for this FIR
+    # SQL: Insert FIR details into the new table along with FIR hash
     table_name = f"FIR_{fir_number}"
     insert_query = f"""INSERT INTO `{table_name}` (
                         complainant_name, father_or_husband_name, address, phone_number, email, 
                         distance_from_police_station, direction_from_police_station, date_and_hour_of_occurrence, 
-                        nature_of_offence, stolen_property_description, accused_names, witness_names, case_status
+                        nature_of_offence, stolen_property_description, accused_names, witness_names, case_status, fir_hash
                       ) 
-                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     values = (complainant_name, father_or_husband_name, address, phone_number, email, 
               distance_from_police_station, direction_from_police_station, date_and_hour_of_occurrence, 
-              nature_of_offence, stolen_property_description, accused_names, witness_names, case_status)
+              nature_of_offence, stolen_property_description, accused_names, witness_names, case_status, fir_hash)
 
     try:
         cursor.execute(insert_query, values)
@@ -113,6 +125,34 @@ def store_case(fir_number, complainant_name, father_or_husband_name, address, ph
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         db.rollback()
+
+def verify_fir_integrity(fir_number):
+    # Fetch FIR details from MySQL
+    table_name = f"{fir_number}"
+    select_query = f"""SELECT * FROM `{table_name}` WHERE id = (SELECT MAX(id) FROM `{table_name}`)"""
+    cursor.execute(select_query)
+    case_details = cursor.fetchone()
+
+    # Recompute the hash of FIR data from MySQL
+    fir_data = {
+        'fir_number': fir_number,
+        'complainant_name': case_details[1],
+        'nature_of_offence': case_details[9],
+        'accused_names': case_details[11],
+        'witness_names': case_details[12]
+    }
+    local_fir_hash = generate_fir_hash(fir_data)
+
+    # Fetch FIR hash stored on the blockchain
+    fir_hash_on_blockchain = contract.functions.getCaseHash(keccak_hash(fir_number)).call()
+
+    # Compare hashes
+    if local_fir_hash == fir_hash_on_blockchain:
+        print(f"FIR {fir_number} is unaltered.")
+        return True
+    else:
+        print(f"FIR {fir_number} has been tampered with!")
+        return False
 
 # Function to update case status on the blockchain and SQL database
 def update_case_status(fir_number, case_status):
@@ -151,11 +191,21 @@ def close_case(fir_number):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print(f"Transaction successful with hash: {tx_receipt.transactionHash.hex()}")
 
+    print(f"Case {fir_number} closed on the blockchain successfully!")
+
     # SQL Database: Update the case status in the new table
-    table_name = f"FIR_{fir_number}"
-    update_query = f"""UPDATE `{table_name}` SET case_status = 'Closed' WHERE id = (SELECT MAX(id) FROM `{table_name}`)"""
+    table_name = f"{fir_number}"
+    update_query = f"""
+        UPDATE `{table_name}` 
+        SET case_status = 'Closed' 
+        WHERE id = (
+            SELECT id FROM (
+                SELECT MAX(id) AS id FROM `{table_name}`
+            ) AS temp
+        )
+    """
     try:
-        cursor.execute(update_query, values)
+        cursor.execute(update_query)
         db.commit()
         print(f"Case {fir_number} closed in SQL database successfully!")
     except mysql.connector.Error as err:

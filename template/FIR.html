@@ -13,61 +13,67 @@
             <h2>Complainant/Informant Details</h2>
             <div class="form-group">
                 <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required placeholder="Enter your name">
+                <input type="text" id="name" name="name" required placeholder="Enter your name" inputmode="text" autocomplete="name">
             </div>
             <div class="form-group">
                 <label for="fatherOrHusbandName">Father's or Husband's Name:</label>
-                <input type="text" id="fatherOrHusbandName" name="fatherOrHusbandName" required placeholder="Enter father's or husband's name">
+                <input type="text" id="fatherOrHusbandName" name="fatherOrHusbandName" required placeholder="Enter father's or husband's name" inputmode="text" autocomplete="name">
             </div>
             <div class="form-group">
                 <label for="address">Address:</label>
-                <input type="text" id="address" name="address" required placeholder="Enter your address">
+                <input type="text" id="address" name="address" required placeholder="Enter your address" autocomplete="street-address">
             </div>
             <div class="form-group">
                 <label for="phoneNumber">Phone Number:</label>
-                <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="Enter your phone number">
+                <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="Enter your phone number" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel">
             </div>
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                <input type="email" id="email" name="email" required placeholder="Enter your email address" autocomplete="email">
             </div>
+
             <h2>Place of Occurrence</h2>
             <div class="form-group">
-                <label for="distanceFromPoliceStation">Distance from Police Station:</label>
-                <input type="text" id="distanceFromPoliceStation" name="distanceFromPoliceStation" required placeholder="Enter the distance from the police station">
+                <label for="distanceFromPoliceStation">Distance from Police Station (in km):</label>
+                <input type="number" id="distanceFromPoliceStation" name="distanceFromPoliceStation" required placeholder="Enter distance" min="0" step="0.1">
             </div>
             <div class="form-group">
                 <label for="directionFromPoliceStation">Direction from Police Station:</label>
-                <input type="text" id="directionFromPoliceStation" name="directionFromPoliceStation" required placeholder="Enter the direction from the police station">
+                <input type="text" id="directionFromPoliceStation" name="directionFromPoliceStation" required placeholder="e.g. North-East" inputmode="text">
             </div>
             <div class="form-group">
                 <label for="dateAndHourOfOccurrence">Date and Hour of Occurrence:</label>
                 <input type="datetime-local" id="dateAndHourOfOccurrence" name="dateAndHourOfOccurrence" required>
             </div>
+
             <h2>Offence Details</h2>
             <div class="form-group">
                 <label for="natureOfOffence">Nature of Offence:</label>
                 <input type="text" id="natureOfOffence" name="natureOfOffence" required placeholder="Enter the nature of the offense">
             </div>
+
             <h2>Stolen Property (if applicable)</h2>
             <div class="form-group stolen-property">
                 <label for="stolenPropertyDescription">Description:</label>
                 <input type="text" id="stolenPropertyDescription" name="stolenPropertyDescription[]" placeholder="Enter description of stolen property">
             </div>
+
             <h2>Accused Details</h2>
             <div class="form-group accused-details" id="accused-inputs">
                 <label for="accusedName">Name:</label>
-                <input type="text" id="accusedName" name="accusedName[]" placeholder="Enter accused's name">
+                <input type="text" id="accusedName" name="accusedName[]" placeholder="Enter accused's name" inputmode="text">
             </div>
             <button type="button" id="addAccused" onclick="addAccusedFeild()">Add More</button>
+
             <h2>Witness Details</h2>
             <div class="form-group witness-details" id="witness-inputs">
                 <label for="witnessName">Name:</label>
-                <input type="text" id="witnessName" name="witnessName[]" placeholder="Enter witness's name">
+                <input type="text" id="witnessName" name="witnessName[]" placeholder="Enter witness's name" inputmode="text">
             </div>
             <button type="button" id="addWitness" onclick="addWitnessFeild()">Add More</button>
+
             <h2>Complaint</h2>
-            <textarea id="complaint" name="complaint" required placeholder="Briefly describe the incident"></textarea>
+            <textarea id="complaint" name="complaint" required placeholder="Briefly describe the incident" rows="5"></textarea>
 
             <button type="submit" style="margin-top: 1em;">Submit Complaint</button>
         </form>

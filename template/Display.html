@@ -24,7 +24,7 @@
                     data-witnesses="{{ details[0][3] if details else 'No witnesses' }}" 
                     data-status="{{ details[0][4] if details else 'Unknown' }}">
                     <td>{{ fir_number }}</td>
-                    <td>{{ 'Ongoing' if details else 'Closed' }}</td> <!-- Modify status based on details -->
+                    <td>{{  details[0][5] }}</td> <!-- Modify status based on details -->
                 </tr>
                 {% endfor %}
             </tbody>
@@ -40,6 +40,7 @@
             <p id="accusedModal"></p>
             <p id="witnessesModal"></p>
             <p id="statusModal"></p>
+            <button id="closeCase" >Close case</button>
         </div>
     </div>
     
@@ -50,6 +51,7 @@
         const firRows = document.querySelectorAll('.fir-row');
         const modal = document.getElementById('firDetailsModal');
         const closeModal = document.querySelector('.close');
+        const closeCaseButton = document.getElementById('closeCase');
 
         firRows.forEach(row => {
             row.addEventListener('click', () => {
@@ -75,6 +77,29 @@
         closeModal.addEventListener('click', () => {
             modal.style.display = 'none';
         });
+
+        closeCaseButton.addEventListener('click', () => {
+            const firNumber = document.getElementById('firNumberModal').innerText.split(': ')[1];
+            fetch(`/closeCase`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fir_number: firNumber })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Case closed successfully!');
+                    // Optionally, you can refresh the page or update the UI to reflect the closed case
+                    window.location.reload(); // Refresh the page to see updated FIRs
+                } else {
+                    console.error('Error closing case:', response.statusText);
+                }
+            })
+            console.log(`Closing case for FIR Number: ${firNumber}`);
+            modal.style.display = 'none';
+        });
+
 
         window.addEventListener('click', (event) => {
             if (event.target === modal) {
