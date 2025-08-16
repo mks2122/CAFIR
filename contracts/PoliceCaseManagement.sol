@@ -12,22 +12,22 @@ contract PoliceCaseManagement {
     }
     
     mapping(bytes32 => CaseData) public cases;
-
+    
     event CaseCreated(bytes32 indexed firNumber, uint256 timestamp);
     event CaseUpdated(bytes32 indexed firNumber, string caseStatus, uint256 timestamp);
 
-    // Create a new case
+    // Store the hash of the case data in the blockchain
     function createCase(
         bytes32 firNumber,
-        bytes32 caseDataHash,
+        bytes32 caseDataHash,    // Hash of the case data
         string calldata caseStatus
     ) public {
-        require(firNumber != bytes32(0), "Invalid FIR number");
+        require(firNumber != bytes32(0), "FIR number cannot be zero");
         require(cases[firNumber].firNumber == bytes32(0), "Case already exists");
 
         cases[firNumber] = CaseData(
             firNumber,
-            caseDataHash,
+            caseDataHash,  // Store the hash of the case data
             caseStatus,
             block.timestamp,
             true
@@ -41,7 +41,8 @@ contract PoliceCaseManagement {
         require(cases[firNumber].firNumber != bytes32(0), "Case not found");
         require(cases[firNumber].isActive, "Case is closed");
 
-        cases[firNumber].caseStatus = caseStatus;
+        CaseData storage c = cases[firNumber];
+        c.caseStatus = caseStatus;
 
         emit CaseUpdated(firNumber, caseStatus, block.timestamp);
     }
@@ -51,19 +52,21 @@ contract PoliceCaseManagement {
         require(cases[firNumber].firNumber != bytes32(0), "Case not found");
         require(cases[firNumber].isActive, "Case is already closed");
 
-        cases[firNumber].isActive = false;
-        cases[firNumber].caseStatus = "Closed";
+        CaseData storage c = cases[firNumber];
+        c.isActive = false;
+        c.caseStatus = "Closed";
 
         emit CaseUpdated(firNumber, "Closed", block.timestamp);
     }
 
-    // Verify the integrity of case data using hash
+    // Function to verify the integrity of the case data hash
     function verifyCaseHash(bytes32 firNumber, bytes32 newCaseDataHash) public view returns (bool) {
         require(cases[firNumber].firNumber != bytes32(0), "Case not found");
-        return cases[firNumber].caseDataHash == newCaseDataHash;
+        
+        return cases[firNumber].caseDataHash == newCaseDataHash;  // Compare the hashes
     }
 
-    // Get case details
+    // Function to retrieve the case hash and status
     function getCase(bytes32 firNumber) 
         public 
         view 
@@ -75,6 +78,7 @@ contract PoliceCaseManagement {
         ) 
     {
         require(cases[firNumber].firNumber != bytes32(0), "Case not found");
+
         CaseData memory c = cases[firNumber];
         return (
             c.firNumber,
@@ -82,11 +86,5 @@ contract PoliceCaseManagement {
             c.caseStatus,
             c.timestamp
         );
-    }
-
-    // Get only the stored hash for integrity check
-    function getCaseHash(bytes32 firNumber) public view returns (bytes32) {
-        require(cases[firNumber].firNumber != bytes32(0), "Case not found");
-        return cases[firNumber].caseDataHash;
     }
 }

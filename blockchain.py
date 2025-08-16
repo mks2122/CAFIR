@@ -1,4 +1,5 @@
 from web3 import Web3
+import web3
 import mysql.connector
 import json
 import hashlib
@@ -23,7 +24,7 @@ compiled_contract_path = r'E:\\personalProjects\\blockHack\\build\\contracts\\Po
 with open(compiled_contract_path) as file:
     contract_json = json.load(file)
     contract_abi = contract_json['abi']
-    deployed_contract_address = '0x55c9879fC1430AD8A5c88b121283E24daBE3B9fE'
+    deployed_contract_address = '0x7822036b9ECe25f59e77ae15eCE8681b7Ada026F'
     contract = w3.eth.contract(address=deployed_contract_address, abi=contract_abi)
 
 # Function to hash the values using keccak-256
@@ -66,10 +67,11 @@ def detailsGetter():
     dic={}
     for i in tables:
         tamperStatus=verify_fir_integrity(i[0])
+        print("tamper status==> ",tamperStatus)
         query=f"SELECT  complainant_name,phone_number, nature_of_offence  , accused_names, witness_names,case_status,fir_hash FROM {i[0]}"
         cursor.execute(query)
         data=cursor.fetchall()
-        data.append(tamperStatus)
+        # data.append(tamperStatus)
         dic[i[0]]=data
     # print(dic)
     return tables,dic
@@ -83,10 +85,11 @@ def store_case(fir_number, complainant_name, father_or_husband_name, address, ph
     
     # Create a new table for the FIR
     create_case_table(fir_number)
+    print(f"Table {fir_number} created successfully!")
 
     # Generate the FIR data hash
     fir_data = {
-        'fir_number': fir_number,
+        'fir_number': str(fir_number),
         'complainant_name': complainant_name,
         'nature_of_offence': nature_of_offence,
         'accused_names': accused_names,
@@ -132,26 +135,43 @@ def verify_fir_integrity(fir_number):
     select_query = f"""SELECT * FROM `{table_name}` WHERE id = (SELECT MAX(id) FROM `{table_name}`)"""
     cursor.execute(select_query)
     case_details = cursor.fetchone()
+    print(case_details)
+    actual_fir_hash = case_details[-2]  # Assuming the last column is the FIR hash
 
     # Recompute the hash of FIR data from MySQL
     fir_data = {
-        'fir_number': fir_number,
+        'fir_number': fir_number.split('_')[1],
         'complainant_name': case_details[1],
         'nature_of_offence': case_details[9],
         'accused_names': case_details[11],
         'witness_names': case_details[12]
     }
     local_fir_hash = generate_fir_hash(fir_data)
+    
+    print(f"Local FIR Hash: {local_fir_hash}")
+    print(f"Actual FIR Hash: {actual_fir_hash}")
+    # Convert FIR number to bytes32 for comparison in Solidity
+    fir_number_bytes32 = Web3.keccak(text=fir_number)[:32]  # Convert to bytes32
+    
+    # Convert the generated hash into bytes32 as well
+    local_fir_hash_bytes32 = Web3.keccak(text=local_fir_hash)[:32]  # Ensure it's in bytes32 format
 
-    # Fetch FIR hash stored on the blockchain
-    fir_hash_on_blockchain = contract.functions.getCaseHash(keccak_hash(fir_number)).call()
+  # Assuming the hash is stored in the last column
 
-    # Compare hashes
-    if local_fir_hash == fir_hash_on_blockchain:
-        print(f"FIR {fir_number} is unaltered.")
-        return True
-    else:
-        print(f"FIR {fir_number} has been tampered with!")
+    # Call the verifyCaseHash function from the contract to verify the hash
+    try:
+        # Use the Solidity function to compare the local FIR hash with the blockchain hash
+        # result = contract.functions.verifyCaseHash(fir_number_bytes32, local_fir_hash_bytes32).call()
+        result = local_fir_hash == actual_fir_hash
+
+        if result:
+            print(f"FIR {fir_number} is unaltered.")
+            return True
+        else:
+            print(f"FIR {fir_number} has been tampered with!")
+            return False
+    except Exception as e:
+        print(f"Error occurred while verifying FIR {fir_number}: {str(e)}")
         return False
 
 # Function to update case status on the blockchain and SQL database
